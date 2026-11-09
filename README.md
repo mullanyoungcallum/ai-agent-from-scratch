@@ -1,143 +1,75 @@
-# Build an AI Agent from Scratch
+# Build an AI Agent from Scratch — my implementation
 
-Companion code repository for Manning Publications' [*Build an AI Agent from Scratch*](https://www.manning.com/books/build-an-ai-agent-from-scratch).
+This is my own implementation, built chapter by chapter while reading Manning's
+[*Build an AI Agent from Scratch*](https://www.manning.com/books/build-an-ai-agent-from-scratch).
 
-## Structure
+The book's companion repo ships a finished package (`scratch_agents/`) alongside notebooks that
+reproduce every listing. Reading finished code doesn't teach you to write it, so on this branch
+(`learning`) the finished package is gone. `main` still has the original, intact, if you ever want
+to compare the full thing. What's left here:
 
+```text
+notebooks/    # the book's chapter notebooks, kept as spec + narrative — unmodified
+agents/       # my implementation, built one chapter at a time, starting empty
+tests/        # my tests, plus tests/fakes.py (fake LLM/sandbox/etc. services, no API keys needed)
 ```
-scratch_agents/          # Final package (complete through CH10)
-  types.py              # Message, ToolCall, ToolResult, Event, ContentItem
-  context.py            # ExecutionContext, AgentResult, PendingToolCall, ToolConfirmation
-  llm.py                # LlmRequest, LlmResponse, LlmClient
-  agent.py              # Agent (ReAct loop)
-  rag.py                # Embeddings, chunking, vector search
-  callbacks.py          # approval_callback, search_compressor
-  planning.py           # Task, create_tasks, reflection
-  skills.py             # SkillInfo, discover_skills, generate_skills_prompt
-  transfer.py           # create_transfer_tool
-  remote.py             # RemoteAgent (A2A)
-  a2a_server.py         # MathAgentExecutor
-  tools/                # Tool modules
-  memory/               # Session, long-term memory, context optimization
-  workflows/            # Sequential, Parallel, Loop
-  eval/                 # GAIA benchmark, evaluation prompts
 
-notebooks/              # Chapter notebooks
-  ch02/                 # LLM API Basics
-  ch03/                 # Tools and Function Calling
-  ch04/                 # ReAct Agent (+ chapter snapshot code)
-  ch05/                 # RAG and File Tools (+ chapter snapshot code)
-  ch06/                 # Memory Systems (+ chapter snapshot code)
-  ch07/                 # Planning and Reflection
-  ch08/                 # Code Execution (+ chapter snapshot code)
-  ch09/                 # Multi-Agent Systems (+ chapter snapshot code)
-  ch10/                 # Evaluation
-```
+## Why the notebooks are broken
+
+Every notebook from CH02 onward imports `scratch_agents`, which no longer exists on this branch.
+That's intentional: an `ImportError` naming a module I haven't written yet *is* the next thing to
+build. The notebook prose, listing numbers, and explanations are all still there — only the
+reference implementation is gone.
+
+## Working agreement (with Claude)
+
+- Claude writes module skeletons — signatures, type hints, docstrings stating the contract, bodies
+  left as `NotImplementedError` — plus failing tests. I write the bodies.
+- Layout and design are mine. Claude only flags a choice when it will hurt a later chapter.
+- I compare against the book's original only *after* attempting a piece:
+  `git show main:scratch_agents/<file>.py`.
+- The loop, per chapter: read the chapter → run its notebook → Claude scaffolds → I implement →
+  review and diff against `main`.
 
 ## Setup
 
-Use Python 3.13 or later. Start from the repository root. `uv sync` installs
-`scratch_agents` as a package as well as its dependencies.
-
 ```bash
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install dependencies
-uv sync --locked
-
-# Set up API keys in .env
-cp .env.example .env
-# Edit .env and add your API keys
-
-# Launch Jupyter Lab
+uv sync
+cp .env.example .env   # add API keys as each chapter needs them
 uv run jupyter lab
 ```
 
-## API Keys
+`pyproject.toml` starts with no dependencies — they get added one at a time
+(`uv add openai`, `uv add litellm`, …) as each chapter actually needs them, instead of installing
+everything the finished book needs on day one.
 
-Create a `.env` file in the project root with the following keys:
+## API keys
 
-```
-OPENAI_API_KEY=sk-...          # Required for all chapters
-ANTHROPIC_API_KEY=sk-ant-...   # Required for CH02 Anthropic examples
-TAVILY_API_KEY=tvly-...        # Required for CH03 web search
-HF_TOKEN=hf_...                # Required for CH02 GAIA benchmark
-E2B_API_KEY=e2b_...            # Required for CH08 code execution
-```
+Add keys to `.env` as chapters require them:
 
-`OPENAI_API_KEY` covers the OpenAI examples, not every cell in every chapter.
-For **Restart Kernel and Run All**, prepare each chapter's prerequisites first:
-
-| Chapters | Additional prerequisites |
-|---|---|
-| CH02 | Anthropic key; Hugging Face account with accepted GAIA access and `HF_TOKEN` |
-| CH03–CH04 | Tavily key; Node.js/npm (`npx`) for the Tavily MCP server; CH04 also needs GAIA access |
-| CH05 | Tavily key and GAIA access/downloads for attachment exercises |
-| CH06 | OpenAI key for model calls and ChromaDB embeddings |
-| CH07 | Tavily key for search examples |
-| CH08 | E2B key; Tavily key only for sandbox tools that use it |
-| CH09 | E2B/Tavily keys when running the specialist agents that use those services |
-| CH10 | OpenAI key |
-
-Set keys in the repository's `.env`. Notebook setup finds this file from the
-chapter directory. Select the project environment's Python kernel in Jupyter.
-If a different environment is selected, install the dependencies in that kernel
-or restart Jupyter with `uv run jupyter lab`.
-
-These examples make real, potentially billable requests. CH02 includes a
-100-request concurrency example and multi-model GAIA evaluation; reduce the
-example counts when doing a quick live check. Model IDs are examples and require
-access from your provider account.
-
-CH05 creates `notebooks/ch05/gaia_workspace` and resets its contents for the
-attachment exercise; do not keep personal files there. CH06 creates its own
-throwaway deletion target, and CH08 uses the GAIA spreadsheet prepared in CH05.
-
-## Chapters
-
-| Chapter | Topic | Key Modules |
-|---------|-------|-------------|
-| CH02 | LLM API Basics | eval/gaia.py |
-| CH03 | Tools and Function Calling | tools/helpers.py, tools/calculator.py, tools/search.py |
-| CH04 | ReAct Agent | types.py, context.py, llm.py, agent.py, tools/base.py |
-| CH05 | RAG and File Tools | rag.py, callbacks.py, tools/file_tools.py |
-| CH06 | Memory Systems | memory/session.py, memory/long_term.py, memory/context_optimizer.py |
-| CH07 | Planning and Reflection | planning.py |
-| CH08 | Code Execution | tools/code_execution.py, skills.py |
-| CH09 | Multi-Agent Systems | workflows/, transfer.py, tools/agent_tool.py |
-| CH10 | Evaluation | eval/prompts.py |
-
-## Chapter Snapshot Files
-
-Some notebook directories (ch04, ch05, ch06, ch08, ch09) contain `.py` snapshot
-files showing the core modules at that chapter's stage. Use them to compare the
-implementation with the book. The runnable integration examples import
-`scratch_agents`.
-
-## Running the notebooks
-
-Run code cells in order from a fresh kernel. Blocks labeled **Implementation
-excerpt** show part of a class or method; read them with the surrounding book
-explanation. They are not standalone programs.
-
-To run CH08's three optional agent examples, uncomment their calls after setting
-up the required API keys. The Excel example also requires
-`7cc4acfa-63fd-4acc-a1a1-e8e529e0a97f.xlsx` in `notebooks/ch05/gaia_workspace`,
-prepared using the CH05 attachment workflow.
-
-If a parallel workflow has failed or is awaiting approval, it raises
-`ParallelWorkflowIncomplete` (available from `scratch_agents.workflows`). Inspect
-its `branch_results` for each agent's result and context, and `branch_errors` for
-exceptions. Automatic retry/resume is not supported. Re-running the whole
-workflow can repeat actions from branches that already completed.
+| Chapters | Keys / prerequisites |
+| --- | --- |
+| CH02 | `OPENAI_API_KEY`; `ANTHROPIC_API_KEY` for the Anthropic examples; a Hugging Face account with accepted GAIA access and `HF_TOKEN` for the benchmark |
+| CH03–CH04 | `TAVILY_API_KEY`; Node.js/npm (`npx`) for the Tavily MCP server |
+| CH05 | `TAVILY_API_KEY` and GAIA access/downloads for attachment exercises |
+| CH06 | `OPENAI_API_KEY` for model calls and embeddings |
+| CH07 | `TAVILY_API_KEY` for search examples |
+| CH08 | `E2B_API_KEY`; `TAVILY_API_KEY` only for sandbox tools that use it |
+| CH09 | `E2B_API_KEY`/`TAVILY_API_KEY` when running specialist agents that use those services |
+| CH10 | `OPENAI_API_KEY` |
 
 ## Tests
 
 ```bash
-uv sync --locked --extra test
+uv sync --extra test
 uv run --extra test pytest -q
 ```
 
-Tests use simulated external services and do not require API keys. To verify
-provider access and live responses, run the notebooks with your own credentials.
+Tests must never require API keys — `tests/fakes.py` has fake external services (LLM completion,
+embeddings, sandbox) to monkeypatch instead of calling a real provider.
+
+## Attribution
+
+Notebooks are from Manning's companion repo for *Build an AI Agent from Scratch*, MIT-licensed —
+see `LICENSE`. Everything in `agents/` and `tests/` (other than `tests/fakes.py`, adapted from the
+same source) is my own.

@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+# Jupyter
+.ipynb_checkpoints/
+
 # Virtual environments
 .venv
 
@@ -14,9 +17,3 @@ wheels/
 
 # OS files
 .DS_Store
-
-# Internal / not for public companion repo
-book/
-spec/
-adk-python/
-REVIEW_NOTES.md
