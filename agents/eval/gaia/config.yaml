@@ -1,0 +1,4 @@
+semaphores:
+  openai: 30
+  anthropic: 10
+  gemini: 5
